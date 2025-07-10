@@ -20,7 +20,7 @@ body {
 }
 
 #gamebox {
-    margin-top: 10vh;
+  margin-top: 10vh;
   background-color: grey;
   border: 8px solid rgb(163, 140, 8);
   width: 80%;
@@ -44,14 +44,40 @@ body {
 #menu {
   background-color: aqua;
   grid-area: menu;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
-#map {
+#zone1 {
   background-color: beige;
   grid-area: map;
 }
 
-#activity {
+#zone2 {
   background-color: brown;
   grid-area: act;
+}
+
+.map {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.inventory {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.htext {
+  margin-bottom: 1rem;
+  margin-top: 1rem;
+}
+
+.m-btn {
+  width: 100%;
+  padding: 0.5rem;
 }
