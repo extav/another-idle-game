@@ -1,0 +1,57 @@
+/* Reset from Slaying The Dragon on youtube */
+/* https://youtu.be/nSst4-WbEZk?t=1030 */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+}
+
+/* --------------------------------- */
+
+body {
+  display: flex;
+  justify-content: center;
+}
+
+#gamebox {
+    margin-top: 10vh;
+  background-color: grey;
+  border: 8px solid rgb(163, 140, 8);
+  width: 80%;
+  height: 80vh;
+
+  display: grid;
+  grid-template-columns: repeat(13, 1fr);
+  grid-template-rows: repeat(9, 1fr);
+  grid-template-areas:
+    "menu menu menu map map map map map map map map map map"
+    "menu menu menu map map map map map map map map map map"
+    "menu menu menu map map map map map map map map map map"
+    "menu menu menu map map map map map map map map map map"
+    "menu menu menu map map map map map map map map map map"
+    "menu menu menu map map map map map map map map map map"
+    "menu menu menu act act act act act act act act act act"
+    "menu menu menu act act act act act act act act act act"
+    "menu menu menu act act act act act act act act act act";
+}
+
+#menu {
+  background-color: aqua;
+  grid-area: menu;
+}
+
+#map {
+  background-color: beige;
+  grid-area: map;
+}
+
+#activity {
+  background-color: brown;
+  grid-area: act;
+}
