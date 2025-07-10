@@ -15,7 +15,7 @@ function populateMap() {
   const htext = document.createElement("div");
   htext.classList.add("htext");
   htext.textContent = "Map";
-  zone1.append(htext);
+  zone1.appendChild(htext);
 
   // add the body of the zone
   const body = document.createElement("p");
@@ -23,6 +23,12 @@ function populateMap() {
     "This should eventually be a canvas but for " +
     "now its just text right here";
   zone1.appendChild(body);
+
+  const canv = document.createElement("canvas");
+  canv.id = "mapcanvas";
+  canv.height = 300;
+  canv.width = 300;
+  zone1.appendChild(canv);
 }
 
 function populateInventory() {
@@ -61,6 +67,7 @@ function mapButton() {
     zone2.innerHTML = "";
     populateMap();
     console.log("populated map");
+    drawMap();
   }
 }
 
@@ -74,5 +81,24 @@ function inventoryButton() {
 }
 
 // ----------- page setup --------- //
-document.getElementById("map-btn").onclick = mapButton;
-document.getElementById("inventory-btn").onclick = inventoryButton;
+
+function drawMap() {
+  const canv = document.getElementById("mapcanvas");
+  console.log(canv)
+  const context = canv.getContext("2d");
+  console.log(context)
+  context.fillStyle = "black";
+  // context.fillRect(10, 10, 50, 50);
+  context.beginPath();
+  context.arc(75, 75, 10, 0,  2 * Math.PI, 1);
+  context.fill();
+}
+
+// ----------- page setup --------- //
+window.onload = function () {
+  document.getElementById("map-btn").onclick = mapButton;
+  document.getElementById("inventory-btn").onclick = inventoryButton;
+
+  populateMap();
+  drawMap()
+};

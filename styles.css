@@ -66,6 +66,13 @@ body {
   align-items: center;
 }
 
+#mapcanvas {
+  /* width: 150; setting these here doesn't work
+  height: 150; */
+  background-color: antiquewhite;
+  margin-top: 2rem;
+}
+
 .inventory {
   display: flex;
   flex-direction: column;
