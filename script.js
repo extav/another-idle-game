@@ -46,6 +46,10 @@ function populateMap() {
   rightbtn.onclick = genMapMoveFn(1, 0);
   buttondiv.appendChild(rightbtn);
 
+  const actbtn = document.createElement("button");
+  actbtn.textContent = "activate nearby nodes"
+  actbtn.onclick = activateNearbyNodes
+  buttondiv.appendChild(actbtn)
   zone1.appendChild(buttondiv);
 }
 
@@ -200,6 +204,10 @@ function getNodesToDraw() {
 
 function genMapMoveFn(delX, delY) {
   return function () {
+    // first check if the new move is legal
+    if (!checkLegalMove(delX, delY)) {
+      return;
+    }
     // remove selected from the current map node
     for (const mn of mapnodes) {
       if (mn.isSelected) {
@@ -219,6 +227,40 @@ function genMapMoveFn(delX, delY) {
 
     drawMap();
   };
+}
+
+function checkLegalMove(delX, delY) {
+  const newx = map_position_x + 1.5 + delX;
+  const newy = map_position_y + 1.5 + delY;
+  let newNode;
+  for (const mn of mapnodes) {
+    if (mn.isAtLocation(newx, newy)) {
+      newNode = mn;
+    }
+  }
+  return newNode.isUnlocked;
+}
+
+function activateNearbyNodes() {
+  // activate the top
+  for (const mn of mapnodes) {
+    if (
+      mn.isAtLocation(map_position_x + 1.5, map_position_y + 0.5) ||
+      mn.isAtLocation(map_position_x + 0.5, map_position_y + 1.5) ||
+      mn.isAtLocation(map_position_x + 2.5, map_position_y + 1.5) ||
+      mn.isAtLocation(map_position_x + 1.5, map_position_y + 2.5)
+    ) {
+      if (!mn.isUnlocked) {
+        assignNodeType(mn);
+        mn.isUnlocked = true;
+      }
+    }
+  }
+  drawMap();
+}
+
+function assignNodeType(node) {
+  node.type = Math.floor(Math.random() * 2 + 1);
 }
 // ----------- page setup --------- //
 window.onload = function () {
