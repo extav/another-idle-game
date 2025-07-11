@@ -47,9 +47,9 @@ function populateMap() {
   buttondiv.appendChild(rightbtn);
 
   const actbtn = document.createElement("button");
-  actbtn.textContent = "activate nearby nodes"
-  actbtn.onclick = activateNearbyNodes
-  buttondiv.appendChild(actbtn)
+  actbtn.textContent = "activate nearby nodes";
+  actbtn.onclick = activateNearbyNodes;
+  buttondiv.appendChild(actbtn);
   zone1.appendChild(buttondiv);
 }
 
@@ -73,10 +73,44 @@ function populateInventory() {
   zone1.appendChild(body);
 }
 
+function populateActivity() {
+  const zone = document.getElementById("zone2");
+
+  //toggle the class to the map class
+  removeClasses("zone2", zone);
+  zone.classList.add("activity");
+
+  // add the title of the zone
+  const htext = document.createElement("div");
+  htext.classList.add("htext");
+  htext.textContent = "Activity";
+  zone.append(htext);
+
+  // add the body of the zone
+  const pbar = document.createElement("div");
+  pbar.id = "activity-progress";
+  zone.appendChild(pbar);
+
+  const pfill = document.createElement("div");
+  pfill.id = "activity-fill";
+  pbar.appendChild(pfill);
+
+  const ktxt = document.createElement("p");
+  ktxt.textContent = "Kills: 0";
+  ktxt.id = "kill-text";
+  const gtxt = document.createElement("p");
+  gtxt.textContent = "Gold: 0";
+  gtxt.id = "gold-text";
+  zone.appendChild(ktxt);
+  zone.appendChild(gtxt);
+}
+
 function removeClasses(zoneName, zone) {
   if (zoneName == "zone1") {
     zone.classList.remove("map");
     zone.classList.remove("inventory");
+  } else if (zoneName == "zone2") {
+    zone.classList.remove("activity");
   } else {
     print("ERROR: Passed improper zone name to removeClasses");
   }
@@ -119,6 +153,8 @@ class Mapnode {
     this.mapy = mapy;
     this.isUnlocked = isUnlocked;
     this.isSelected = isSelected;
+    this.kills = 0;
+    this.goldValue = 10;
   }
 
   isAtLocation(x, y) {
@@ -262,16 +298,78 @@ function activateNearbyNodes() {
 function assignNodeType(node) {
   node.type = Math.floor(Math.random() * 2 + 1);
 }
+
+// ----------- activity stuff --------- //
+let activity = "fighting";
+let strength = 10;
+let toughness = 50;
+let damageDealt = 0;
+
+const gameData = {
+  currentNode: undefined,
+  gold: 0,
+  genPower: 0.2,
+  lastFightUpdate: undefined,
+  genCost: 5,
+  hangingPoints: 0,
+};
+
+function update(timestamp) {
+  fight(timestamp);
+  // console.log("going!");
+  updateActivityZone();
+  if (activity == "fighting") {
+    requestAnimationFrame(update);
+  }
+}
+function fight(timestamp) {
+  if (
+    gameData.lastFightUpdate == undefined ||
+    timestamp - gameData.lastFightUpdate > 30000
+  ) {
+    gameData.lastFightUpdate = timestamp;
+  }
+  const elapsed = timestamp - gameData.lastFightUpdate;
+  gameData.lastFightUpdate = timestamp;
+  damageDealt += (strength * elapsed) / 1000;
+  // console.log(elapsed + "," + damageDealt + "," + toughness);
+  if (damageDealt > toughness) {
+    damageDealt = 0;
+    barFill();
+  }
+
+  updateActivityBar(damageDealt / toughness);
+}
+
+function updateActivityZone() {
+  document.getElementById("kill-text").textContent =
+    "Kills: " + gameData.currentNode.kills;
+  document.getElementById("gold-text").textContent = "Gold: " + gameData.gold;
+}
+
+function updateActivityBar(ratio) {
+  const fill = document.getElementById("activity-fill");
+  fill.style.width = Math.round(ratio * 10000) / 100 + "%";
+}
+
+function barFill() {
+  gameData.currentNode.kills += 1;
+  gameData.gold += gameData.currentNode.goldValue;
+}
 // ----------- page setup --------- //
 window.onload = function () {
   document.getElementById("map-btn").onclick = mapButton;
   document.getElementById("inventory-btn").onclick = inventoryButton;
 
   const m1 = new Mapnode(1, 0, 0, true, true);
+  gameData.currentNode = m1;
+  console.log(gameData.currentNode);
   mapnodes.add(m1);
   const m2 = new Mapnode(2, 1, 0, true, false);
   mapnodes.add(m2);
 
   populateMap();
   drawMap();
+  populateActivity();
+  requestAnimationFrame(update);
 };
