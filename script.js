@@ -103,6 +103,23 @@ function populateActivity() {
   gtxt.id = "gold-text";
   zone.appendChild(ktxt);
   zone.appendChild(gtxt);
+
+  const dpstxt = document.createElement("p");
+  dpstxt.textContent = "DPS: 10";
+  dpstxt.id = "dps-text";
+
+  const enemyHPtxt = document.createElement("p");
+  enemyHPtxt.textContent = "Enemy HP: 50";
+  enemyHPtxt.id = "hp-text";
+
+  zone.appendChild(dpstxt);
+  zone.appendChild(enemyHPtxt);
+
+  const upgbtn = document.createElement("button");
+  upgbtn.textContent = "Upgrade: 10 gold";
+  upgbtn.id = "upgrade-button";
+  upgbtn.onclick = upgradeButton;
+  zone.appendChild(upgbtn);
 }
 
 function removeClasses(zoneName, zone) {
@@ -124,6 +141,16 @@ function mapButton() {
     populateMap();
     console.log("populated map");
     drawMap();
+  }
+}
+
+function upgradeButton() {
+  if (gameData.gold > gameData.upgradeCost) {
+    gameData.gold -= gameData.upgradeCost;
+    gameData.upgradeCost = gameData.upgradeCost ** 1.1;
+    document.getElementById("upgrade-button").textContent =
+      "Upgrade: " + Math.round(gameData.upgradeCost) + " gold";
+    gameData.strength += gameData.upgradePower;
   }
 }
 
@@ -314,21 +341,29 @@ function activateNearbyNodes() {
 }
 
 function assignNodeType(node) {
-  node.type = Math.floor(Math.random() * 2 + 1);
+  const num = Math.floor(Math.random() * 100);
+  if (num < 95) {
+    node.type = 1;
+  } else {
+    node.type = 2;
+  }
 }
 
 // ----------- activity stuff --------- //
 let activity = "fighting";
-let strength = 10;
 
 const gameData = {
+  killsToProg: 10,
   currentNode: undefined,
   gold: 0,
+  strength: 10,
   genPower: 0.2,
   lastFightUpdate: undefined,
   genCost: 5,
-  hangingPoints: 0,
-  damageDealt: 0
+  upgradeCost: 10,
+  upgradePower: 10,
+  damageDealt: 0,
+  blueNodeMultiplier: 3,
 };
 
 function update(timestamp) {
@@ -348,7 +383,7 @@ function fight(timestamp) {
   }
   const elapsed = timestamp - gameData.lastFightUpdate;
   gameData.lastFightUpdate = timestamp;
-  gameData.damageDealt += (strength * elapsed) / 1000;
+  gameData.damageDealt += (gameData.strength * elapsed) / 1000;
   if (gameData.damageDealt > gameData.currentNode.toughness) {
     gameData.damageDealt = 0;
     barFill();
@@ -359,8 +394,13 @@ function fight(timestamp) {
 
 function updateActivityZone() {
   document.getElementById("kill-text").textContent =
-    "Kills: " + gameData.currentNode.kills;
-  document.getElementById("gold-text").textContent = "Gold: " + gameData.gold;
+    "Kills: " + gameData.currentNode.kills + " / " + gameData.killsToProg;
+  document.getElementById("gold-text").textContent =
+    "Gold: " + Math.round(gameData.gold);
+  document.getElementById("dps-text").textContent =
+    "DPS: " + Math.round(gameData.strength);
+  document.getElementById("hp-text").textContent =
+    "Enemy HP: " + Math.round(gameData.currentNode.toughness);
 }
 
 function updateActivityBar(ratio) {
@@ -370,9 +410,15 @@ function updateActivityBar(ratio) {
 
 function barFill() {
   gameData.currentNode.kills += 1;
-  gameData.gold += gameData.currentNode.goldValue;
-  if (gameData.currentNode.kills == 5) {
-    activateNearbyNodes()
+  let newGold = gameData.currentNode.goldValue;
+  if (gameData.currentNode.type == 2) {
+    newGold *=
+      gameData.blueNodeMultiplier **
+      gameData.currentNode.calcDistanceFromOrigin();
+  }
+  gameData.gold += newGold;
+  if (gameData.currentNode.kills == gameData.killsToProg) {
+    activateNearbyNodes();
   }
 }
 // ----------- page setup --------- //
