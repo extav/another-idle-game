@@ -91,10 +91,12 @@ const MAPNODESIZE = 50;
 const mapnodes = new Set();
 
 class Mapnode {
-  constructor(type, mapx, mapy) {
+  constructor(type, mapx, mapy, isUnlocked, isSelected) {
     this.type = type;
     this.mapx = mapx;
     this.mapy = mapy;
+    this.isUnlocked = isUnlocked;
+    this.isSelected = isSelected;
   }
 
   isAtLocation(x, y) {
@@ -126,8 +128,27 @@ function drawMap() {
     const mn_pixely = (mn.mapy - map_position_y) * 100;
 
     context.fillRect(mn_pixelx, mn_pixely, MAPNODESIZE, MAPNODESIZE);
+    context.fillStyle = "white";
+    const str = "(" + mn.mapx + "," + mn.mapy + ")";
+    context.fillText(str, mn_pixelx + 13, mn_pixely + 10);
     console.log("filled rect");
+    if (mn.isSelected) {
+      outlineSelected(context, mn_pixelx, mn_pixely);
+    }
   }
+}
+
+function outlineSelected(context, x, y) {
+  context.strokeStyle = "gold";
+  context.lineWidth = 6;
+  context.beginPath();
+  context.moveTo(x-6, y-3);
+  context.lineTo(x+3 + MAPNODESIZE, y-3);
+  context.lineTo(x+3 + MAPNODESIZE, y+3 + MAPNODESIZE);
+  context.lineTo(x-3, y+3 + MAPNODESIZE);
+  context.lineTo(x-3, y-3);
+  context.stroke();
+  context.closePath();
 }
 
 function getNodesToDraw() {
@@ -163,9 +184,9 @@ window.onload = function () {
   document.getElementById("map-btn").onclick = mapButton;
   document.getElementById("inventory-btn").onclick = inventoryButton;
 
-  const m1 = new Mapnode(1, 0, 0);
+  const m1 = new Mapnode(1, 0, 0, true, true);
   mapnodes.add(m1);
-  const m2 = new Mapnode(2, 1, 0);
+  const m2 = new Mapnode(2, 1, 0, true, false);
   mapnodes.add(m2);
 
   populateMap();
