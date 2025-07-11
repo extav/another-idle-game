@@ -47,9 +47,9 @@ function populateMap() {
   buttondiv.appendChild(rightbtn);
 
   const actbtn = document.createElement("button");
-  actbtn.textContent = "activate nearby nodes"
-  actbtn.onclick = activateNearbyNodes
-  buttondiv.appendChild(actbtn)
+  actbtn.textContent = "activate nearby nodes";
+  actbtn.onclick = activateNearbyNodes;
+  buttondiv.appendChild(actbtn);
   zone1.appendChild(buttondiv);
 }
 
@@ -73,10 +73,61 @@ function populateInventory() {
   zone1.appendChild(body);
 }
 
+function populateActivity() {
+  const zone = document.getElementById("zone2");
+
+  //toggle the class to the map class
+  removeClasses("zone2", zone);
+  zone.classList.add("activity");
+
+  // add the title of the zone
+  const htext = document.createElement("div");
+  htext.classList.add("htext");
+  htext.textContent = "Activity";
+  zone.append(htext);
+
+  // add the body of the zone
+  const pbar = document.createElement("div");
+  pbar.id = "activity-progress";
+  zone.appendChild(pbar);
+
+  const pfill = document.createElement("div");
+  pfill.id = "activity-fill";
+  pbar.appendChild(pfill);
+
+  const ktxt = document.createElement("p");
+  ktxt.textContent = "Kills: 0";
+  ktxt.id = "kill-text";
+  const gtxt = document.createElement("p");
+  gtxt.textContent = "Gold: 0";
+  gtxt.id = "gold-text";
+  zone.appendChild(ktxt);
+  zone.appendChild(gtxt);
+
+  const dpstxt = document.createElement("p");
+  dpstxt.textContent = "DPS: 10";
+  dpstxt.id = "dps-text";
+
+  const enemyHPtxt = document.createElement("p");
+  enemyHPtxt.textContent = "Enemy HP: 50";
+  enemyHPtxt.id = "hp-text";
+
+  zone.appendChild(dpstxt);
+  zone.appendChild(enemyHPtxt);
+
+  const upgbtn = document.createElement("button");
+  upgbtn.textContent = "Upgrade: 10 gold";
+  upgbtn.id = "upgrade-button";
+  upgbtn.onclick = upgradeButton;
+  zone.appendChild(upgbtn);
+}
+
 function removeClasses(zoneName, zone) {
   if (zoneName == "zone1") {
     zone.classList.remove("map");
     zone.classList.remove("inventory");
+  } else if (zoneName == "zone2") {
+    zone.classList.remove("activity");
   } else {
     print("ERROR: Passed improper zone name to removeClasses");
   }
@@ -90,6 +141,16 @@ function mapButton() {
     populateMap();
     console.log("populated map");
     drawMap();
+  }
+}
+
+function upgradeButton() {
+  if (gameData.gold > gameData.upgradeCost) {
+    gameData.gold -= gameData.upgradeCost;
+    gameData.upgradeCost = gameData.upgradeCost ** 1.1;
+    document.getElementById("upgrade-button").textContent =
+      "Upgrade: " + Math.round(gameData.upgradeCost) + " gold";
+    gameData.strength += gameData.upgradePower;
   }
 }
 
@@ -111,6 +172,8 @@ let map_position_y = -1.5;
 const MAPSIZE = 350;
 const MAPNODESIZE = 50;
 const mapnodes = new Set();
+const BASEGOLDVALUE = 10;
+const BASETOUGHNESS = 50;
 
 class Mapnode {
   constructor(type, mapx, mapy, isUnlocked, isSelected) {
@@ -119,11 +182,27 @@ class Mapnode {
     this.mapy = mapy;
     this.isUnlocked = isUnlocked;
     this.isSelected = isSelected;
+    this.kills = 0;
+    this.goldValue = this.calcGoldValue();
+    this.toughness = this.calcToughness();
   }
 
   isAtLocation(x, y) {
     // console.log("comparing " + this.mapx + " to " + x)
     return this.mapx == x && this.mapy == y;
+  }
+
+  calcDistanceFromOrigin() {
+    return Math.sqrt(this.mapx ** 2 + this.mapy ** 2);
+  }
+
+  calcGoldValue() {
+    // console.log(" gold value")
+    return 1.2 ** this.calcDistanceFromOrigin() * BASEGOLDVALUE;
+  }
+
+  calcToughness() {
+    return 1.3 ** this.calcDistanceFromOrigin() * BASETOUGHNESS;
   }
 }
 
@@ -217,11 +296,13 @@ function genMapMoveFn(delX, delY) {
 
     map_position_x += delX;
     map_position_y += delY;
+    gameData.damageDealt = 0;
 
     // add selected to the new center node
     for (const mn of mapnodes) {
       if (mn.isAtLocation(map_position_x + 1.5, map_position_y + 1.5)) {
         mn.isSelected = true;
+        gameData.currentNode = mn;
       }
     }
 
@@ -260,7 +341,85 @@ function activateNearbyNodes() {
 }
 
 function assignNodeType(node) {
-  node.type = Math.floor(Math.random() * 2 + 1);
+  const num = Math.floor(Math.random() * 100);
+  if (num < 95) {
+    node.type = 1;
+  } else {
+    node.type = 2;
+  }
+}
+
+// ----------- activity stuff --------- //
+let activity = "fighting";
+
+const gameData = {
+  killsToProg: 10,
+  currentNode: undefined,
+  gold: 0,
+  strength: 10,
+  genPower: 0.2,
+  lastFightUpdate: undefined,
+  genCost: 5,
+  upgradeCost: 10,
+  upgradePower: 10,
+  damageDealt: 0,
+  blueNodeMultiplier: 3,
+};
+
+function update(timestamp) {
+  fight(timestamp);
+  // console.log("going!");
+  updateActivityZone();
+  if (activity == "fighting") {
+    requestAnimationFrame(update);
+  }
+}
+function fight(timestamp) {
+  if (
+    gameData.lastFightUpdate == undefined ||
+    timestamp - gameData.lastFightUpdate > 30000
+  ) {
+    gameData.lastFightUpdate = timestamp;
+  }
+  const elapsed = timestamp - gameData.lastFightUpdate;
+  gameData.lastFightUpdate = timestamp;
+  gameData.damageDealt += (gameData.strength * elapsed) / 1000;
+  if (gameData.damageDealt > gameData.currentNode.toughness) {
+    gameData.damageDealt = 0;
+    barFill();
+  }
+
+  updateActivityBar(gameData.damageDealt / gameData.currentNode.toughness);
+}
+
+function updateActivityZone() {
+  document.getElementById("kill-text").textContent =
+    "Kills: " + gameData.currentNode.kills + " / " + gameData.killsToProg;
+  document.getElementById("gold-text").textContent =
+    "Gold: " + Math.round(gameData.gold);
+  document.getElementById("dps-text").textContent =
+    "DPS: " + Math.round(gameData.strength);
+  document.getElementById("hp-text").textContent =
+    "Enemy HP: " + Math.round(gameData.currentNode.toughness);
+}
+
+function updateActivityBar(ratio) {
+  const fill = document.getElementById("activity-fill");
+  fill.style.width = Math.round(ratio * 10000) / 100 + "%";
+}
+
+function barFill() {
+  gameData.currentNode.kills += 1;
+  let newGold = gameData.currentNode.goldValue;
+  if (gameData.currentNode.type == 2) {
+    newGold *=
+      gameData.blueNodeMultiplier **
+      gameData.currentNode.calcDistanceFromOrigin();
+  }
+  gameData.gold += newGold;
+  if (gameData.currentNode.kills == gameData.killsToProg) {
+    activateNearbyNodes();
+  }
 }
 // ----------- page setup --------- //
 window.onload = function () {
@@ -268,10 +427,14 @@ window.onload = function () {
   document.getElementById("inventory-btn").onclick = inventoryButton;
 
   const m1 = new Mapnode(1, 0, 0, true, true);
+  gameData.currentNode = m1;
+  console.log(gameData.currentNode);
   mapnodes.add(m1);
   const m2 = new Mapnode(2, 1, 0, true, false);
   mapnodes.add(m2);
 
   populateMap();
   drawMap();
+  populateActivity();
+  requestAnimationFrame(update);
 };
