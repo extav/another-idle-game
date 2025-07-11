@@ -145,6 +145,8 @@ let map_position_y = -1.5;
 const MAPSIZE = 350;
 const MAPNODESIZE = 50;
 const mapnodes = new Set();
+const BASEGOLDVALUE = 10;
+const BASETOUGHNESS = 50;
 
 class Mapnode {
   constructor(type, mapx, mapy, isUnlocked, isSelected) {
@@ -154,12 +156,26 @@ class Mapnode {
     this.isUnlocked = isUnlocked;
     this.isSelected = isSelected;
     this.kills = 0;
-    this.goldValue = 10;
+    this.goldValue = this.calcGoldValue();
+    this.toughness = this.calcToughness();
   }
 
   isAtLocation(x, y) {
     // console.log("comparing " + this.mapx + " to " + x)
     return this.mapx == x && this.mapy == y;
+  }
+
+  calcDistanceFromOrigin() {
+    return Math.sqrt(this.mapx ** 2 + this.mapy ** 2);
+  }
+
+  calcGoldValue() {
+    // console.log(" gold value")
+    return 1.2 ** this.calcDistanceFromOrigin() * BASEGOLDVALUE;
+  }
+
+  calcToughness() {
+    return 1.3 ** this.calcDistanceFromOrigin() * BASETOUGHNESS;
   }
 }
 
@@ -253,11 +269,13 @@ function genMapMoveFn(delX, delY) {
 
     map_position_x += delX;
     map_position_y += delY;
+    gameData.damageDealt = 0;
 
     // add selected to the new center node
     for (const mn of mapnodes) {
       if (mn.isAtLocation(map_position_x + 1.5, map_position_y + 1.5)) {
         mn.isSelected = true;
+        gameData.currentNode = mn;
       }
     }
 
@@ -302,8 +320,6 @@ function assignNodeType(node) {
 // ----------- activity stuff --------- //
 let activity = "fighting";
 let strength = 10;
-let toughness = 50;
-let damageDealt = 0;
 
 const gameData = {
   currentNode: undefined,
@@ -312,6 +328,7 @@ const gameData = {
   lastFightUpdate: undefined,
   genCost: 5,
   hangingPoints: 0,
+  damageDealt: 0
 };
 
 function update(timestamp) {
@@ -331,14 +348,13 @@ function fight(timestamp) {
   }
   const elapsed = timestamp - gameData.lastFightUpdate;
   gameData.lastFightUpdate = timestamp;
-  damageDealt += (strength * elapsed) / 1000;
-  // console.log(elapsed + "," + damageDealt + "," + toughness);
-  if (damageDealt > toughness) {
-    damageDealt = 0;
+  gameData.damageDealt += (strength * elapsed) / 1000;
+  if (gameData.damageDealt > gameData.currentNode.toughness) {
+    gameData.damageDealt = 0;
     barFill();
   }
 
-  updateActivityBar(damageDealt / toughness);
+  updateActivityBar(gameData.damageDealt / gameData.currentNode.toughness);
 }
 
 function updateActivityZone() {
@@ -355,6 +371,9 @@ function updateActivityBar(ratio) {
 function barFill() {
   gameData.currentNode.kills += 1;
   gameData.gold += gameData.currentNode.goldValue;
+  if (gameData.currentNode.kills == 5) {
+    activateNearbyNodes()
+  }
 }
 // ----------- page setup --------- //
 window.onload = function () {
