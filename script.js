@@ -17,18 +17,36 @@ function populateMap() {
   htext.textContent = "Map";
   zone1.appendChild(htext);
 
-  // add the body of the zone
-  const body = document.createElement("p");
-  body.textContent =
-    "This should eventually be a canvas but for " +
-    "now its just text right here";
-  zone1.appendChild(body);
-
   const canv = document.createElement("canvas");
   canv.id = "mapcanvas";
   canv.height = MAPSIZE;
   canv.width = MAPSIZE;
   zone1.appendChild(canv);
+
+  const buttondiv = document.createElement("div");
+  buttondiv.id = "map-navigation";
+
+  const upbtn = document.createElement("button");
+  upbtn.textContent = "↑";
+  upbtn.onclick = genMapMoveFn(0, -1);
+  buttondiv.appendChild(upbtn);
+
+  const downbtn = document.createElement("button");
+  downbtn.textContent = "↓";
+  downbtn.onclick = genMapMoveFn(0, 1);
+  buttondiv.appendChild(downbtn);
+
+  const leftbtn = document.createElement("button");
+  leftbtn.textContent = "←";
+  leftbtn.onclick = genMapMoveFn(-1, 0);
+  buttondiv.appendChild(leftbtn);
+
+  const rightbtn = document.createElement("button");
+  rightbtn.textContent = "→";
+  rightbtn.onclick = genMapMoveFn(1, 0);
+  buttondiv.appendChild(rightbtn);
+
+  zone1.appendChild(buttondiv);
 }
 
 function populateInventory() {
@@ -110,7 +128,7 @@ function drawMap() {
   console.log(canv);
   const context = canv.getContext("2d");
   console.log(context);
-  // context.arc(75, 75, 10, 0, 2 * Math.PI, 1);
+  context.clearRect(0, 0, MAPSIZE, MAPSIZE);
   const ntd = getNodesToDraw();
 
   console.log(ntd);
@@ -142,11 +160,11 @@ function outlineSelected(context, x, y) {
   context.strokeStyle = "gold";
   context.lineWidth = 6;
   context.beginPath();
-  context.moveTo(x-6, y-3);
-  context.lineTo(x+3 + MAPNODESIZE, y-3);
-  context.lineTo(x+3 + MAPNODESIZE, y+3 + MAPNODESIZE);
-  context.lineTo(x-3, y+3 + MAPNODESIZE);
-  context.lineTo(x-3, y-3);
+  context.moveTo(x - 6, y - 3);
+  context.lineTo(x + 3 + MAPNODESIZE, y - 3);
+  context.lineTo(x + 3 + MAPNODESIZE, y + 3 + MAPNODESIZE);
+  context.lineTo(x - 3, y + 3 + MAPNODESIZE);
+  context.lineTo(x - 3, y - 3);
   context.stroke();
   context.closePath();
 }
@@ -178,6 +196,29 @@ function getNodesToDraw() {
     }
   }
   return nodes;
+}
+
+function genMapMoveFn(delX, delY) {
+  return function () {
+    // remove selected from the current map node
+    for (const mn of mapnodes) {
+      if (mn.isSelected) {
+        mn.isSelected = false;
+      }
+    }
+
+    map_position_x += delX;
+    map_position_y += delY;
+
+    // add selected to the new center node
+    for (const mn of mapnodes) {
+      if (mn.isAtLocation(map_position_x + 1.5, map_position_y + 1.5)) {
+        mn.isSelected = true;
+      }
+    }
+
+    drawMap();
+  };
 }
 // ----------- page setup --------- //
 window.onload = function () {
