@@ -80,46 +80,94 @@ function populateActivity() {
   removeClasses("zone2", zone);
   zone.classList.add("activity");
 
-  // add the title of the zone
+  // add the stats section
+  const d1 = document.createElement("div");
+  d1.id = "activity-stats";
+  zone.appendChild(d1);
+
+  const gtxt = document.createElement("p");
+  gtxt.textContent = "Gold";
+  gtxt.classList.add("activity-label");
+  d1.appendChild(gtxt);
+
+  const gval = document.createElement("p");
+  gval.textContent = "0";
+  gval.id = "gold-text";
+  gval.classList.add("activity-number");
+  d1.appendChild(gval);
+
+  const dtxt = document.createElement("p");
+  dtxt.textContent = "DPS";
+  dtxt.classList.add("activity-label");
+  d1.appendChild(dtxt);
+
+  const dval = document.createElement("p");
+  dval.textContent = "10";
+  dval.id = "dps-text";
+  dval.classList.add("activity-number");
+  d1.appendChild(dval);
+
+  const upgbtn = document.createElement("button");
+  upgbtn.textContent = "Upgrade 10 gold";
+  upgbtn.id = "upgrade-button";
+  upgbtn.onclick = upgradeButton;
+  d1.appendChild(upgbtn);
+
+  // add the activity section
+  const d2 = document.createElement("div");
+  d2.id = "activity-main";
+  zone.appendChild(d2);
+
   const htext = document.createElement("div");
   htext.classList.add("htext");
+  htext.id = "activity-name";
   htext.textContent = "Activity";
-  zone.appendChild(htext);
+  d2.appendChild(htext);
 
-  // add the body of the zone
+  const enemyHPtxt = document.createElement("p");
+  enemyHPtxt.textContent = "Enemy HP: 50";
+  enemyHPtxt.id = "hp-text";
+  d2.appendChild(enemyHPtxt);
+
   const pbar = document.createElement("div");
   pbar.id = "activity-progress";
-  zone.appendChild(pbar);
+  d2.appendChild(pbar);
 
   const pfill = document.createElement("div");
   pfill.id = "activity-fill";
   pbar.appendChild(pfill);
 
-  const ktxt = document.createElement("p");
-  ktxt.textContent = "Kills: 0";
-  ktxt.id = "kill-text";
-  const gtxt = document.createElement("p");
-  gtxt.textContent = "Gold: 0";
-  gtxt.id = "gold-text";
-  zone.appendChild(ktxt);
-  zone.appendChild(gtxt);
+  // add the zone progress section
 
-  const dpstxt = document.createElement("p");
-  dpstxt.textContent = "DPS: 10";
-  dpstxt.id = "dps-text";
+  const d3 = document.createElement("div");
+  d3.id = "activity-zoneprog";
+  zone.append(d3);
 
-  const enemyHPtxt = document.createElement("p");
-  enemyHPtxt.textContent = "Enemy HP: 50";
-  enemyHPtxt.id = "hp-text";
+  const ztxt = document.createElement("p");
+  ztxt.id = "activity-zoneinfo";
+  d3.appendChild(ztxt);
 
-  zone.appendChild(dpstxt);
-  zone.appendChild(enemyHPtxt);
+  const k2p = document.createElement("p");
+  k2p.textContent = "Kills to progress";
+  k2p.classList.add("activity-label");
+  d3.appendChild(k2p);
 
-  const upgbtn = document.createElement("button");
-  upgbtn.textContent = "Upgrade: 10 gold";
-  upgbtn.id = "upgrade-button";
-  upgbtn.onclick = upgradeButton;
-  zone.appendChild(upgbtn);
+  const k2pnum = document.createElement("p");
+  k2pnum.textContent = "10";
+  k2pnum.id = "killstoprog-text";
+  k2pnum.classList.add("activity-number");
+  d3.appendChild(k2pnum);
+
+  const killslabel = document.createElement("p");
+  killslabel.textContent = "Zone Kills";
+  killslabel.classList.add("activity-label");
+  d3.appendChild(killslabel);
+
+  const killsnum = document.createElement("p");
+  killsnum.textContent = "0";
+  killsnum.classList.add("activity-number");
+  killsnum.id = "kill-text";
+  d3.appendChild(killsnum);
 }
 
 function populateAbout() {
@@ -174,7 +222,7 @@ function upgradeButton() {
     gameData.gold -= gameData.upgradeCost;
     gameData.upgradeCost = gameData.upgradeCost ** 1.1;
     document.getElementById("upgrade-button").textContent =
-      "Upgrade: " + Math.round(gameData.upgradeCost) + " gold";
+      "Upgrade " + Math.round(gameData.upgradeCost) + " gold";
     gameData.strength += gameData.upgradePower;
   }
 }
@@ -384,14 +432,13 @@ function assignNodeType(node) {
 }
 
 // ----------- activity stuff --------- //
-let activity = "fighting";
 
 const gameData = {
   killsToProg: 10,
   currentNode: undefined,
   gold: 0,
   strength: 10,
-  genPower: 0.2,
+  activity: "fighting",
   lastFightUpdate: undefined,
   genCost: 5,
   upgradeCost: 10,
@@ -404,7 +451,7 @@ function update(timestamp) {
   fight(timestamp);
   // console.log("going!");
   updateActivityZone();
-  if (activity == "fighting") {
+  if (gameData.activity == "fighting") {
     requestAnimationFrame(update);
   }
 }
@@ -427,14 +474,16 @@ function fight(timestamp) {
 }
 
 function updateActivityZone() {
-  document.getElementById("kill-text").textContent =
-    "Kills: " + gameData.currentNode.kills + " / " + gameData.killsToProg;
-  document.getElementById("gold-text").textContent =
-    "Gold: " + Math.round(gameData.gold);
-  document.getElementById("dps-text").textContent =
-    "DPS: " + Math.round(gameData.strength);
+  document.getElementById("kill-text").textContent = gameData.currentNode.kills;
+  document.getElementById("killstoprog-text").textContent =
+    gameData.killsToProg;
+  document.getElementById("gold-text").textContent = Math.round(gameData.gold);
+  document.getElementById("dps-text").textContent = Math.round(
+    gameData.strength
+  );
   document.getElementById("hp-text").textContent =
     "Enemy HP: " + Math.round(gameData.currentNode.toughness);
+  document.getElementById("activity-name").textContent = gameData.activity;
 }
 
 function updateActivityBar(ratio) {
