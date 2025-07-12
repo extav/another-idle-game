@@ -64,7 +64,7 @@ function populateInventory() {
   const htext = document.createElement("div");
   htext.classList.add("htext");
   htext.textContent = "Inventory";
-  zone1.append(htext);
+  zone1.appendChild(htext);
 
   // add the body of the zone
   const body = document.createElement("p");
@@ -84,7 +84,7 @@ function populateActivity() {
   const htext = document.createElement("div");
   htext.classList.add("htext");
   htext.textContent = "Activity";
-  zone.append(htext);
+  zone.appendChild(htext);
 
   // add the body of the zone
   const pbar = document.createElement("div");
@@ -122,10 +122,35 @@ function populateActivity() {
   zone.appendChild(upgbtn);
 }
 
+function populateAbout() {
+  const zone = document.getElementById("zone1");
+
+  //toggle the class to the map class
+  removeClasses("zone1", zone);
+  zone.classList.add("about");
+
+  // add the title of the zone
+  const htext = document.createElement("div");
+  htext.classList.add("htext");
+  htext.textContent = "About";
+  zone.appendChild(htext);
+
+  // add the body of the zone
+
+  const txt1 = document.createElement("p");
+  let str =
+    "Try to get as far away from the center" +
+    " as you can. Nodes get more rewarding as you travel" +
+    " outward. Blue nodes give WAY more gold! Try to find them to get further!";
+  txt1.textContent = str;
+  zone.appendChild(txt1);
+}
+
 function removeClasses(zoneName, zone) {
   if (zoneName == "zone1") {
     zone.classList.remove("map");
     zone.classList.remove("inventory");
+    zone.classList.remove("about");
   } else if (zoneName == "zone2") {
     zone.classList.remove("activity");
   } else {
@@ -160,6 +185,15 @@ function inventoryButton() {
     zone2.innerHTML = "";
     populateInventory();
     console.log("populated inventory");
+  }
+}
+
+function aboutButton() {
+  const zone = document.getElementById("zone1");
+  if (!zone.classList.contains("about")) {
+    zone.innerHTML = "";
+    populateAbout();
+    console.log("populated about");
   }
 }
 
@@ -425,6 +459,7 @@ function barFill() {
 window.onload = function () {
   document.getElementById("map-btn").onclick = mapButton;
   document.getElementById("inventory-btn").onclick = inventoryButton;
+  document.getElementById("about-btn").onclick = aboutButton;
 
   const m1 = new Mapnode(1, 0, 0, true, true);
   gameData.currentNode = m1;
